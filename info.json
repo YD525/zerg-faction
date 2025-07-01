@@ -1,0 +1,16 @@
+{
+  "name": "zerg-faction",
+  "version": "1.0.1",
+  "factorio_version": "2.0",
+  "title": "ZergFaction",
+  "author": "YD525",
+  "contact": "",
+  "homepage": "https://github.com/YD525/zerg-faction",
+  "dependencies": [
+    "base >= 2.0.0"
+  ],
+  "description": "Allows players to build swarm-related structures that spawn friendly biter units. These units will assist the player and automatically attack enemy factions.",
+  "control": {
+    "main": "control.lua"
+  }
+}
