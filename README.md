@@ -1,5 +1,8 @@
 # zerg-faction
 
+## 🌐 published 
+🔗 [https://www.nexusmods.com/factorio/mods/37](https://www.nexusmods.com/factorio/mods/37)
+
 **Factorio Mod — Zerg Faction**
 
 This mod introduces a Zerg-inspired alien faction into Factorio, bringing intelligent, swarm-based enemies that behave with tactical coordination similar to the classic sci-fi Zerg concept.
@@ -23,7 +26,3 @@ Place the mod files into the `mods` folder of your Factorio installation and ena
 
 The **zerg-faction** mod enhances Factorio gameplay by adding a strategic, swarm-based alien enemy faction. Its smart spawning system and spawner capture mechanic — borrowing from great ideas like *this-is-mine* — provide players with a fresh challenge and tactical variety.
 
-## 🌐 Redistribution & Attribution
-You are welcome to share or repost this mod to any website or mod platform.  
-However, **please include a link back to the original Nexus Mods page** to credit the source:  
-🔗 [https://www.nexusmods.com/factorio/mods/37](https://www.nexusmods.com/factorio/mods/37)
