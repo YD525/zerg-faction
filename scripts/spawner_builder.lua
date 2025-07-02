@@ -30,7 +30,7 @@ end
 
 function SpawnerBuilder.onEntityBuilt(event)
     local entity = event.created_entity or event.entity
-    if not entity.valid then return end
+    if not entity or not entity.valid then return nil end
 
     if entity.name == "biter-spawner-placeholder" then
         local surface = entity.surface
@@ -52,98 +52,106 @@ function SpawnerBuilder.onEntityBuilt(event)
                     player_force.set_cease_fire(friendly_force, true)
                 end
 
-                local replace_entity = surface.create_entity{
+                local new_spawner = surface.create_entity{
                     name = "biter-spawner",
                     position = position,
                     force = force_name,
                     raise_built = true
                 }
+
+                entity.destroy()
+                return new_spawner
             end
         end
 
         entity.destroy()
+        return nil
 
     elseif entity.name == "spawner-remove-capsule-entity" then
-    local surface = entity.surface
-    local position = entity.position
-    local player = game.get_player(event.player_index)
-    local player_index = event.player_index
-    if not player_index then return end
 
-    local player_force_name = "friendly-zerg-" .. tostring(player_index)
+        local surface = entity.surface
+        local position = entity.position
+        local player_index = event.player_index
+        if not player_index then return nil end
 
-    game.print("Removing capsule placed. Scanning nearby entities...")
+        local player_force_name = "friendly-zerg-" .. tostring(player_index)
+        local player = game.get_player(player_index)
 
-    local scan_radius = 10
+        game.print("Removing capsule placed. Scanning nearby entities...")
 
-    local entities_in_area = surface.find_entities_filtered{
-        area = {
-            {position.x - scan_radius, position.y - scan_radius},
-            {position.x + scan_radius, position.y + scan_radius}
+        local scan_radius = 10
+
+        local entities_in_area = surface.find_entities_filtered{
+            area = {
+                {position.x - scan_radius, position.y - scan_radius},
+                {position.x + scan_radius, position.y + scan_radius}
+            }
         }
-    }
 
-    local removed_spawner_count = 0
-    local removed_units_and_turrets_count = 0
+        local removed_spawner_count = 0
+        local removed_units_and_turrets_count = 0
 
-    -- First remove the spawner and count it, then return a spawner placeholder
-    for _, found_entity in pairs(entities_in_area) do
-        if found_entity and found_entity.valid and found_entity.force and found_entity.force.name == player_force_name then
-            if found_entity.name == "biter-spawner" then
-                game.print("Found and removed " .. found_entity.force.name .. " biter spawner: " .. found_entity.name ..
-                           " (Position: " .. found_entity.position.x .. ", " .. found_entity.position.y .. ").")
-                found_entity.destroy()
-                removed_spawner_count = removed_spawner_count + 1
-            elseif (found_entity.type == "turret" or found_entity.type == "unit") then
-                found_entity.destroy()
-                removed_units_and_turrets_count = removed_units_and_turrets_count + 1
-            end
-        end
-    end
-
-    game.print("Scan complete. Removed " .. removed_spawner_count .. " friendly-zerg biter spawners and " ..
-               removed_units_and_turrets_count .. " units/turrets.")
-
-    entity.destroy()
-
-    if player and player.valid then
-        if removed_spawner_count > 0 then
-            local spawner_item_name = "biter-spawner-placeholder"
-            local inserted_spawner_count = player.insert{name = spawner_item_name, count = removed_spawner_count}
-            if inserted_spawner_count < removed_spawner_count then
-                local remaining = removed_spawner_count - inserted_spawner_count
-                surface.spill_item_stack(position, {name = spawner_item_name, count = remaining}, true)
-                game.print("Some spawner placeholders returned to inventory, " .. remaining .. " spilled on ground (inventory full).")
-            else
-                game.print("All spawner placeholders returned to player inventory.")
-            end
-        end
-
-        if removed_units_and_turrets_count > 0 then
-            local zerg_egg_item_name = "biter-egg"
-            local inserted_egg_count = player.insert{name = zerg_egg_item_name, count = removed_units_and_turrets_count}
-            if inserted_egg_count < removed_units_and_turrets_count then
-                local remaining_eggs = removed_units_and_turrets_count - inserted_egg_count
-                if remaining_eggs > 3  then
-                    remaining_eggs = 3
+        for _, found_entity in pairs(entities_in_area) do
+            if found_entity and found_entity.valid and found_entity.force and found_entity.force.name == player_force_name then
+                if found_entity.name == "biter-spawner" then
+                    game.print("Found and removed " .. found_entity.force.name .. " biter spawner: " .. found_entity.name ..
+                               " (Position: " .. found_entity.position.x .. ", " .. found_entity.position.y .. ").")
+                    found_entity.destroy()
+                    removed_spawner_count = removed_spawner_count + 1
+                elseif (found_entity.type == "turret" or found_entity.type == "unit") then
+                    found_entity.destroy()
+                    removed_units_and_turrets_count = removed_units_and_turrets_count + 1
                 end
-                surface.spill_item_stack(position, {name = zerg_egg_item_name, count = remaining_eggs}, true)
-                game.print("Some zerg eggs returned to inventory, " .. remaining_eggs .. " spilled on ground (inventory full).")
-            else
-                game.print("All zerg eggs returned to player inventory.")
             end
         end
-    else
-        -- No players present, directly discard all returned items.
-        if removed_spawner_count > 0 then
-            surface.spill_item_stack(position, {name = "biter-spawner-placeholder", count = removed_spawner_count}, true)
+
+        game.print("Scan complete. Removed " .. removed_spawner_count .. " friendly-zerg biter spawners and " ..
+                   removed_units_and_turrets_count .. " units/turrets.")
+
+        entity.destroy()
+
+        if player and player.valid then
+            if removed_spawner_count > 0 then
+                local spawner_item_name = "biter-spawner-placeholder"
+                local inserted_spawner_count = player.insert{name = spawner_item_name, count = removed_spawner_count}
+                if inserted_spawner_count < removed_spawner_count then
+                    local remaining = removed_spawner_count - inserted_spawner_count
+                    surface.spill_item_stack(position, {name = spawner_item_name, count = remaining}, true)
+                    game.print("Some spawner placeholders returned to inventory, " .. remaining .. " spilled on ground (inventory full).")
+                else
+                    game.print("All spawner placeholders returned to player inventory.")
+                end
+            end
+
+            if removed_units_and_turrets_count > 0 then
+                local zerg_egg_item_name = "biter-egg"
+                local inserted_egg_count = player.insert{name = zerg_egg_item_name, count = removed_units_and_turrets_count}
+                if inserted_egg_count < removed_units_and_turrets_count then
+                    local remaining_eggs = removed_units_and_turrets_count - inserted_egg_count
+                    if remaining_eggs > 3 then
+                        remaining_eggs = 3
+                    end
+                    surface.spill_item_stack(position, {name = zerg_egg_item_name, count = remaining_eggs}, true)
+                    game.print("Some zerg eggs returned to inventory, " .. remaining_eggs .. " spilled on ground (inventory full).")
+                else
+                    game.print("All zerg eggs returned to player inventory.")
+                end
+            end
+        else
+            -- No players present, drop items on ground
+            if removed_spawner_count > 0 then
+                surface.spill_item_stack(position, {name = "biter-spawner-placeholder", count = removed_spawner_count}, true)
+            end
+            if removed_units_and_turrets_count > 0 then
+                surface.spill_item_stack(position, {name = "biter-egg", count = removed_units_and_turrets_count}, true)
+            end
+            game.print("Items spilled on ground (no player found).")
         end
-        if removed_units_and_turrets_count > 0 then
-            surface.spill_item_stack(position, {name = "biter-egg", count = removed_units_and_turrets_count}, true)
-        end
-        game.print("Items spilled on ground (no player found).")
+        return nil
     end
-    end
+
+    return nil
 end
+
 
 return SpawnerBuilder

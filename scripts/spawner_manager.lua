@@ -76,29 +76,78 @@ local function Contains(msg,substring)
     return string.find(msg, substring, 1, true) ~= nil
 end
 
-local function GetEntityNames(surface, entity_type, keyword)
-    local entity_names = {}
-    local seen = {} 
+local cached_spawner_names = {}
+local cached_turret_names = {}
+local cached_unit_names = {}
 
-    for _, entity in pairs(surface.find_entities_filtered{type = entity_type}) do
-        --game.print(entity.name)
-        if Contains(entity.name, keyword) then
-            if not seen[entity.name] then
-                seen[entity.name] = true
-                table.insert(entity_names, entity.name)
+local cached_seen_spawner = {}
+local cached_seen_turret = {}
+local cached_seen_unit = {}
+
+function SpawnerManager.UpdateEntityCache(surface, entity_type)
+    
+    if not surface or not surface.valid then return end
+    if not entity_type then return end
+
+    local all_entities = surface.find_entities_filtered{type = entity_type}
+
+    for _, entity in pairs(all_entities) do
+        if entity_type == "unit-spawner" then
+            if Contains(entity.name, "spawner") then
+                if not cached_seen_spawner[entity.name] then
+                    cached_seen_spawner[entity.name] = true
+                    table.insert(cached_spawner_names, entity.name)
+                end
+            end
+
+        elseif entity_type == "turret" then
+            if Contains(entity.name, "worm-turret") then
+                if not cached_seen_turret[entity.name] then
+                    cached_seen_turret[entity.name] = true
+                    table.insert(cached_turret_names, entity.name)
+                end
+            end
+
+        elseif entity_type == "unit" then
+            if Contains(entity.name, "biter") then
+                if not cached_seen_unit[entity.name] then
+                    cached_seen_unit[entity.name] = true
+                    table.insert(cached_unit_names, entity.name)
+                end
             end
         end
     end
-
-    return entity_names
 end
 
-local function SpawnRandomEntity(surface, spawn_pos, cluster_force_name, entity_type, keyword)
-    local entity_names = GetEntityNames(surface, entity_type, keyword)
+function SpawnerManager.InitNames(surface)
+    if #cached_spawner_names == 0 then
+        SpawnerManager.UpdateEntityCache(surface, "unit-spawner")
+    end
     
+    if #cached_turret_names == 0 then
+        SpawnerManager.UpdateEntityCache(surface, "turret")
+    end
+    
+    if #cached_unit_names == 0 then
+       SpawnerManager.UpdateEntityCache(surface, "unit")
+    end
+end
+
+local function SpawnRandomEntity(surface, spawn_pos, cluster_force_name, entity_type)
+    local entity_names
+
+    if entity_type == "unit-spawner" then
+        entity_names = cached_spawner_names
+    elseif entity_type == "turret" then
+        entity_names = cached_turret_names
+    elseif entity_type == "unit" then
+        entity_names = cached_unit_names
+    else
+        entity_names = {}
+    end
+
     if #entity_names > 0 then
-        local random_name = entity_names[math.random(#entity_names)] 
-        --game.print(random_name)
+        local random_name = entity_names[math.random(#entity_names)]
         if surface.can_place_entity({name = random_name, position = spawn_pos, force = cluster_force_name}) then
             local entity = surface.create_entity{
                 name = random_name,
@@ -106,17 +155,10 @@ local function SpawnRandomEntity(surface, spawn_pos, cluster_force_name, entity_
                 force = cluster_force_name,
                 raise_built = true
             }
-
             if entity and entity.valid then
                 return entity
-            else
-                --Log("Failed to create entity: " .. random_name .. " at position: " .. serpent.line(spawn_pos))
             end
-        else
-           --Log("Cannot place entity: " .. random_name .. " at position: " .. serpent.line(spawn_pos))
         end
-    else
-       --Log("No entities found matching keyword: " .. keyword)
     end
 
     return nil
@@ -222,7 +264,7 @@ function SpawnerManager.SpawnUnits(Event)
                 if nearby_unit_count_for_cluster < desired_units_in_cluster then
 
                     local spawn_pos = GetDirectionalSpawnPos(surface, cluster_center_pos, adjusted_radius, cluster_force_name)
-                    local Unit = SpawnRandomEntity(surface, spawn_pos, cluster_force_name, "unit", "biter")
+                    local Unit = SpawnRandomEntity(surface, spawn_pos, cluster_force_name, "unit")
                     if Unit and Unit.valid then
                         total_units_spawned_this_tick = total_units_spawned_this_tick + 1
                     end
@@ -244,7 +286,7 @@ local MAX_SPAWN_ATTEMPTS = 10
 local function try_spawn_spawner(surface, cluster_center_pos, cluster_radius, force_name)
     for attempt = 1, MAX_SPAWN_ATTEMPTS do
         local spawn_pos = GetDirectionalSpawnPos(surface, cluster_center_pos, cluster_radius, force_name)
-        local spawner = SpawnRandomEntity(surface, spawn_pos, force_name, "unit-spawner", "spawner")
+        local spawner = SpawnRandomEntity(surface, spawn_pos, force_name, "unit-spawner")
         if spawner then
             return true
         end
@@ -307,7 +349,7 @@ function SpawnerManager.SpawnBuildings(Event)
                 local max_turrets = math.floor(spawner_count * 1)
 
                 if turrets_in_cluster < max_turrets then
-                    SpawnRandomEntity(surface, spawn_pos, cluster_force_name, "turret", "worm-turret")
+                    SpawnRandomEntity(surface, spawn_pos, cluster_force_name, "turret")
                 end
 
                 local cluster_id = force_name .. "-" .. tostring(cluster_index)

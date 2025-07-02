@@ -6,15 +6,23 @@ script.on_init(function()
 end)
 
 script.on_event(defines.events.on_built_entity, function(event)
-    SpawnerBuilder.onEntityBuilt(event)
+    local new_entity = SpawnerBuilder.onEntityBuilt(event)
+    if new_entity and new_entity.valid then
+        local surface = new_entity.surface
+        SpawnerManager.UpdateEntityCache(surface, "unit-spawner")
+        SpawnerManager.UpdateEntityCache(surface, "turret")
+        SpawnerManager.UpdateEntityCache(surface, "unit")
+    end
 end)
 
 script.on_nth_tick(3000, function(event)
+    SpawnerManager.InitNames(game.surfaces["nauvis"])
     SpawnerManager.SpawnUnits(event)
    -- SpawnerManager.SpawnBuildings(event)
 end)
 
 script.on_nth_tick(5000, function(event)
+    SpawnerManager.InitNames(game.surfaces["nauvis"])
     SpawnerManager.SpawnBuildings(event)
    -- SpawnerManager.SpawnBuildings(event)
 end)
