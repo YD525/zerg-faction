@@ -7,7 +7,8 @@
   "contact": "",
   "homepage": "https://www.nexusmods.com/factorio/mods/37",
   "dependencies": [
-    "base >= 2.0.0"
+    "base >= 2.0.0",
+    "space-age"
   ],
   "description": "Allows players to build swarm-related structures that spawn friendly biter units. These units will assist the player and automatically attack enemy factions.",
   "control": {
