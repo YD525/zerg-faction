@@ -71,6 +71,12 @@ local function CountUnitsInArea(Surface, CenterPosition, Radius, ForceName)
     return #nearby_friendly_units
 end
 
+function SpawnerManager.IsFriendlyZergUnit(entity, player_index)
+  if not (entity and entity.valid and entity.type == "unit") then return false end
+
+  local expected_force_name = "friendly-zerg-" .. tostring(player_index)
+  return entity.force.name == expected_force_name
+end
 
 local function Contains(msg,substring)
     return string.find(msg, substring, 1, true) ~= nil

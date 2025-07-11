@@ -1,3 +1,5 @@
+local item_sounds = require("__base__.prototypes.item_sounds")
+
 local ent = table.deepcopy(data.raw["lamp"]["small-lamp"])
 ent.name = "biter-spawner-placeholder"
 ent.icons = {
@@ -77,3 +79,45 @@ local capsule_recipe = {
 }
 
 data:extend{capsule_ent, capsule_itm, capsule_recipe}
+
+
+data:extend({
+  {
+    type = "selection-tool",
+    name = "zfswarm-assembly-point",
+    icon = "__zerg-faction__/graphics/icons/swarm-target.png",
+    icon_size = 50,
+    flags = {"not-stackable", "only-in-cursor", "spawnable"},
+    subgroup = "spawnables",
+    order = "c[automated-construction]-e[zfswarm-assembly-point]",
+    stack_size = 1,
+    select = {
+            border_color = {r = 0.3, g = 0.9, b = 0.3},
+            mode = {"any-entity"},
+            cursor_box_type = "copy",
+   },
+  alt_select = {
+            border_color = {r = 0.9, g = 0.9, b = 0.3},
+            mode = {"any-entity"},
+            cursor_box_type = "entity",
+  },
+  pick_sound = item_sounds.combinator_inventory_pickup,
+  drop_sound = item_sounds.combinator_inventory_move,
+  inventory_move_sound = item_sounds.combinator_inventory_move,
+  }
+})
+
+data:extend({
+  {
+    type = "shortcut",
+    name = "zfswarm-assembly-point",
+    localised_name = { "item-name.zfswarm-assembly-point"},
+    order = "a",
+    action = "spawn-item",
+    item_to_spawn = "zfswarm-assembly-point",
+    icon = "__zerg-faction__/graphics/icons/swarm-target.png",
+    icon_size = 50,
+    small_icon = "__zerg-faction__/graphics/icons/swarm-target.png",
+    small_icon_size = 50,
+  }
+})

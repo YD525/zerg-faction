@@ -1,5 +1,6 @@
 local SpawnerBuilder = require("scripts.spawner_builder")
 local SpawnerManager = require("scripts.spawner_manager")
+local SwarmController = require("scripts.swarm_controller")
 
 script.on_init(function()
     
@@ -76,4 +77,22 @@ script.on_event(defines.events.on_entity_died, function(event)
     if entity.valid then
         entity.destroy()
     end
+end)
+
+script.on_event(defines.events.on_player_selected_area, function(event)
+  if event.item ~= "zfswarm-assembly-point" then return end
+
+  local player_index = event.player_index
+  local player = game.get_player(player_index)
+  local selected_units = {}
+
+  for _, entity in pairs(event.entities) do
+    if entity.valid and entity.type == "unit" then
+      if SpawnerManager.IsFriendlyZergUnit(entity, player_index) then
+        table.insert(selected_units, entity)
+      end
+    end
+  end
+
+  SwarmController.MoveToFollowEntity(selected_units,player_index)
 end)
